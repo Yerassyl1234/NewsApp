@@ -2,11 +2,14 @@ package com.example.newsapp.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.work.WorkManager
 import com.example.newsapp.data.local.NewsDao
 import com.example.newsapp.data.local.NewsDatabase
 import com.example.newsapp.data.remote.NewsApiService
 import com.example.newsapp.data.repository.NewsRepositoryImpl
+import com.example.newsapp.data.repository.SettingsRepositoryImpl
 import com.example.newsapp.domain.repository.NewsRepository
+import com.example.newsapp.domain.repository.SettingsRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -24,6 +27,15 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 interface DataModule {
+
+    @Binds
+    @Singleton
+    fun bindSettingsRepository(
+        impl: SettingsRepositoryImpl
+    ): SettingsRepository
+
+
+
     @Binds
     @Singleton
     fun bindNewsRepository(
@@ -32,6 +44,11 @@ interface DataModule {
 
     companion object {
 
+        @Provides
+        @Singleton
+        fun provideWorkManager(
+            @ApplicationContext context: Context
+        ):WorkManager= WorkManager.getInstance(context)
 
         @Provides
         @Singleton

@@ -2,7 +2,7 @@
 
 package com.example.newsapp.presentation.screens.subscriptions
 
-import android.widget.Space
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,12 +43,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -58,7 +60,7 @@ import com.example.newsapp.presentation.ui.theme.CustomIcons
 import com.example.newsapp.presentation.utils.formatDate
 
 @Composable
-fun SubscriptionScreen(
+fun SubscriptionsScreen(
     modifier: Modifier = Modifier,
     viewModel: SubscriptionsViewModel = hiltViewModel(),
     onNavigateToSettings: () -> Unit
@@ -77,16 +79,16 @@ fun SubscriptionScreen(
             )
         }
 
-    ){ innerPadding->
+    ) { innerPadding ->
         val state by viewModel.state.collectAsStateWithLifecycle()
 
         LazyColumn(
-            modifier=Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             contentPadding = innerPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp)
-        ){
+        ) {
             item {
                 Subscriptions(
                     subscriptions = state.subscriptions,
@@ -107,34 +109,35 @@ fun SubscriptionScreen(
 
                 )
             }
-            if (state.articles.isNotEmpty()){
-                item{
+            if (state.articles.isNotEmpty()) {
+                item {
                     HorizontalDivider()
                 }
-                item{
+                item {
                     Text(
                         text = "Articles (${state.articles.size})",
-                        fontWeight = FontWeight.Bold)
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                item{
+                item {
                     HorizontalDivider()
                 }
                 items(
-                    items=state.articles,
+                    items = state.articles,
                     key = { it.url }
-                ){
+                ) {
                     ArticleCard(
                         article = it
                     )
                 }
-            }else if (state.subscriptions.isNotEmpty()){
-                item{
+            } else if (state.subscriptions.isNotEmpty()) {
+                item {
                     HorizontalDivider()
                 }
-                item{
+                item {
                     Text(
-                        modifier=Modifier.fillMaxWidth(),
-                        text= stringResource(R.string.no_articles_for_selected_subscriptions),
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.no_articles_for_selected_subscriptions),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -182,7 +185,7 @@ private fun SubscriptionTopBar(
                 modifier = Modifier
                     .clip(CircleShape)
                     .clickable {
-                        onSettingsClick
+                        onSettingsClick()
                     }
                     .padding(8.dp),
                 imageVector = Icons.Default.Settings,
@@ -304,7 +307,7 @@ private fun ArticleCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(8.dp),
-        colors=CardDefaults.cardColors(
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
@@ -356,7 +359,7 @@ private fun ArticleCard(
             )
 
         }
-        Spacer(modifier=Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Row(
             modifier = Modifier
@@ -364,9 +367,13 @@ private fun ArticleCard(
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val context = LocalContext.current
             Button(
-                modifier=Modifier.weight(1f),
-                onClick = {}
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, article.url.toUri())
+                    context.startActivity(intent)
+                }
             ) {
                 Icon(
                     imageVector = CustomIcons.OpenInNew,
@@ -378,11 +385,17 @@ private fun ArticleCard(
             }
 
             Button(
-                modifier=Modifier.weight(1f),
-                onClick = {}
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    val intent=Intent(Intent.ACTION_SEND).apply{
+                        type="text/plain"
+                        putExtra(Intent.EXTRA_TEXT,"${article.title}\n\n${article.url}")
+                    }
+                    context.startActivity(intent)
+                }
             ) {
                 Icon(
-                    imageVector =Icons.Default.Share,
+                    imageVector = Icons.Default.Share,
                     contentDescription = stringResource(R.string.share_article),
 
                     )
